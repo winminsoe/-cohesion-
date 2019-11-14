@@ -59,31 +59,31 @@ func main() {
 			if err != nil {
 				fmt.Println(err.Error()) 
 			}
-			getConstriantStatement := `SELECT TABLE_NAME, COLUMN_NAME
+			getConstraintStatement := `SELECT TABLE_NAME, COLUMN_NAME
 			FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
 			WHERE
 			REFERENCED_TABLE_SCHEMA = '%s'
 			AND REFERENCED_COLUMN_NAME = '%s'
 			AND REFERENCED_TABLE_NAME = '%s'
 			`
-			getConstriantQuery := fmt.Sprintf(getConstriantStatement, dbName, autoIncrementColumn, tableName)
-			constriantResult, err := db.Query(getConstriantQuery)
+			getConstraintQuery := fmt.Sprintf(getConstraintStatement, dbName, autoIncrementColumn, tableName)
+			constraintResult, err := db.Query(getConstraintQuery)
 
 			if err != nil {
 				fmt.Println(err.Error())
 			}
 			
-			var constriantTable, constraintKey []byte
+			var constraintTable, constraintKey []byte
 			fmt.Println("| Table | Column |")
 			fmt.Println("| ----- | ------ |")
-			for constriantResult.Next() {
-				err = constriantResult.Scan(&constriantTable, &constraintKey)
+			for constraintResult.Next() {
+				err = constraintResult.Scan(&constraintTable, &constraintKey)
 
 				if err != nil {
 					fmt.Println(err.Error()) 
 				}
 
-				fmt.Println("| `",string(constriantTable), "` | `", string(constraintKey), "` |")
+				fmt.Println("| `",string(constraintTable), "` | `", string(constraintKey), "` |")
 			}
 		}
 		fmt.Println("\n");

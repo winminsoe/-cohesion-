@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 )
-
 func main() {
 	dbDsn := os.Getenv("DB_DSN")
 	if dbDsn == "" {
@@ -16,10 +15,10 @@ func main() {
 	}
 	temp := strings.SplitAfter(dbDsn,"/")
 	dbName := temp[1]
-
+	
 	db, err := sql.Open("mysql", dbDsn)
 	if err != nil {
-    	fmt.Println(err.Error())
+		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 	defer db.Close()
@@ -32,11 +31,9 @@ func main() {
 	var tableName string
 	for tables.Next() {
 		err = tables.Scan(&tableName)
-
 		if err != nil {
 			fmt.Println(err.Error()) 
 		}
-
 		fmt.Println("## `", tableName, "`");
 		fmt.Println("\n");
 
@@ -47,18 +44,19 @@ func main() {
 		AND EXTRA like 'auto_increment'
 		`
 		getAutoIncrementQuery := fmt.Sprintf(getAutoIncrementStatement, tableName, dbName)
-    	autoIncrement, err := db.Query(getAutoIncrementQuery)
+		autoIncrement, err := db.Query(getAutoIncrementQuery)
+
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-
 		var autoIncrementColumn string
 		for autoIncrement.Next() {
 			err = autoIncrement.Scan(&autoIncrementColumn)
-
+			
 			if err != nil {
 				fmt.Println(err.Error()) 
 			}
+			
 			getConstraintStatement := `SELECT TABLE_NAME, COLUMN_NAME
 			FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
 			WHERE
@@ -68,11 +66,11 @@ func main() {
 			`
 			getConstraintQuery := fmt.Sprintf(getConstraintStatement, dbName, autoIncrementColumn, tableName)
 			constraintResult, err := db.Query(getConstraintQuery)
-
+			
 			if err != nil {
 				fmt.Println(err.Error())
 			}
-			
+
 			var constraintTable, constraintKey []byte
 			fmt.Println("| Table | Column |")
 			fmt.Println("| ----- | ------ |")

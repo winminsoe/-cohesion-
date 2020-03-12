@@ -10,10 +10,12 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+const invalidParamMsg = "Please set env variable DB_DSN to a valid MySQL connection string"
+
 func main() {
 	dbDsn := os.Getenv("DB_DSN")
 	if dbDsn == "" {
-		fmt.Fprint(os.Stderr, "Please set env variable DB_DSN to a valid MySQL connection string")
+		fmt.Fprint(os.Stderr, invalidParamMsg)
 		os.Exit(1)
 	}
 	temp := strings.SplitAfter(dbDsn, "/")
@@ -60,7 +62,6 @@ func main() {
 				if err != nil {
 					fmt.Println(err.Error())
 				}
-
 				fmt.Println("| `", string(constraintTable), "` | `", string(constraintKey), "` |")
 			}
 		}

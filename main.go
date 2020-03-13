@@ -24,7 +24,7 @@ type mainTable struct {
 }
 
 type allTables struct {
-	MainTables []mainTable `json:""`
+	MainTables []mainTable `json:"all_tables"`
 }
 
 func main() {
@@ -67,7 +67,7 @@ func main() {
 			getConstraintQuery := fmt.Sprintf(query.GetConstraintStatement, dbName, autoIncrementColumn, tableName)
 			constraintResult := getRows(db, getConstraintQuery)
 
-			var constraintTable, constraintKey []byte
+			var constraintTable, constraintKey string
 			for constraintResult.Next() {
 				err = constraintResult.Scan(&constraintTable, &constraintKey)
 
@@ -75,7 +75,7 @@ func main() {
 					fmt.Println(err.Error())
 				}
 
-				currentDependentTable := dependentTable{TableName: string(constraintTable), ColumnName: string(constraintKey)}
+				currentDependentTable := dependentTable{TableName: constraintTable, ColumnName: constraintKey}
 				currentTable.addDependentTable(currentDependentTable)
 			}
 		}

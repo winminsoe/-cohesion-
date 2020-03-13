@@ -23,10 +23,6 @@ type mainTable struct {
 	DependentTables []dependentTable `json:"dependent_tables"`
 }
 
-type allTables struct {
-	MainTables []mainTable `json:"all_tables"`
-}
-
 func main() {
 	dbDsn := os.Getenv("DB_DSN")
 	if dbDsn == "" {
@@ -44,7 +40,6 @@ func main() {
 	defer db.Close()
 
 	tables := getRows(db, query.ShowTableStatement)
-	currentAllTables := allTables{[]mainTable{}}
 
 	var tableName string
 	for tables.Next() {
@@ -77,13 +72,11 @@ func main() {
 
 				currentDependentTable := dependentTable{TableName: constraintTable, ColumnName: constraintKey}
 				currentTable.addDependentTable(currentDependentTable)
+				result, _ := json.Marshal(currentTable)
+				fmt.Println(string(result))
 			}
 		}
-		currentAllTables.addMainTable(currentTable)
 	}
-
-	result, _ := json.Marshal(currentAllTables)
-	fmt.Println(string(result))
 }
 
 func getRows(db *sql.DB, query string) *sql.Rows {
@@ -97,9 +90,4 @@ func getRows(db *sql.DB, query string) *sql.Rows {
 func (mainTable *mainTable) addDependentTable(dependentTable dependentTable) []dependentTable {
 	mainTable.DependentTables = append(mainTable.DependentTables, dependentTable)
 	return mainTable.DependentTables
-}
-
-func (allTables *allTables) addMainTable(mainTable mainTable) []mainTable {
-	allTables.MainTables = append(allTables.MainTables, mainTable)
-	return allTables.MainTables
 }

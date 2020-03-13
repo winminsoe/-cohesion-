@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -11,6 +12,20 @@ import (
 )
 
 const invalidParamMsg = "Please set env variable DB_DSN to a valid MySQL connection string"
+
+type dependentTable struct {
+	TableName  string `json:"table"`
+	ColumnName string `json:"column"`
+}
+
+type mainTable struct {
+	TableName       string           `json:"table"`
+	DependentTables []dependentTable `json:"dependent_tables"`
+}
+
+type allTables struct {
+	MainTables []mainTable `json:""`
+}
 
 func main() {
 	dbDsn := os.Getenv("DB_DSN")
@@ -29,6 +44,7 @@ func main() {
 	defer db.Close()
 
 	tables := getRows(db, query.ShowTableStatement)
+	currentAllTables := allTables{[]mainTable{}}
 
 	var tableName string
 	for tables.Next() {
@@ -36,9 +52,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		fmt.Println("## `", tableName, "`")
-		fmt.Println("\n")
-
+		currentTable := mainTable{TableName: tableName}
 		getAutoIncrementQuery := fmt.Sprintf(query.GetAutoIncrementStatement, tableName, dbName)
 		autoIncrement := getRows(db, getAutoIncrementQuery)
 
@@ -54,19 +68,22 @@ func main() {
 			constraintResult := getRows(db, getConstraintQuery)
 
 			var constraintTable, constraintKey []byte
-			fmt.Println("| Table | Column |")
-			fmt.Println("| ----- | ------ |")
 			for constraintResult.Next() {
 				err = constraintResult.Scan(&constraintTable, &constraintKey)
 
 				if err != nil {
 					fmt.Println(err.Error())
 				}
-				fmt.Println("| `", string(constraintTable), "` | `", string(constraintKey), "` |")
+
+				currentDependentTable := dependentTable{TableName: string(constraintTable), ColumnName: string(constraintKey)}
+				currentTable.addDependentTable(currentDependentTable)
 			}
 		}
-		fmt.Println("\n")
+		currentAllTables.addMainTable(currentTable)
 	}
+
+	result, _ := json.Marshal(currentAllTables)
+	fmt.Println(string(result))
 }
 
 func getRows(db *sql.DB, query string) *sql.Rows {
@@ -75,4 +92,14 @@ func getRows(db *sql.DB, query string) *sql.Rows {
 		fmt.Println(err.Error())
 	}
 	return rows
+}
+
+func (mainTable *mainTable) addDependentTable(dependentTable dependentTable) []dependentTable {
+	mainTable.DependentTables = append(mainTable.DependentTables, dependentTable)
+	return mainTable.DependentTables
+}
+
+func (allTables *allTables) addMainTable(mainTable mainTable) []mainTable {
+	allTables.MainTables = append(allTables.MainTables, mainTable)
+	return allTables.MainTables
 }

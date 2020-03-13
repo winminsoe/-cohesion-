@@ -72,10 +72,10 @@ func main() {
 
 				currentDependentTable := dependentTable{TableName: constraintTable, ColumnName: constraintKey}
 				currentTable.addDependentTable(currentDependentTable)
-				result, _ := json.Marshal(currentTable)
-				fmt.Println(string(result))
 			}
 		}
+		result, _ := json.Marshal(currentTable)
+		fmt.Println(string(result))
 	}
 }
 
